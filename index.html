@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Optimización de Almacén Farmacéutico · Caso de demostración · Pierre R.</title>
+<meta name="description" content="Caso de demostración de gestión de almacenes de alto desempeño: 600+ posiciones de inventario sobre catálogo público de medicamentos esenciales (MINSA/DIGEMID), con ABC, FEFO, Six Sigma y trabajo de control.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F4F1EA;--paper-2:#ECE7DC;--ink:#16120D;--ink-soft:#4C463C;--ink-faint:#8B8475;
+    --amber:#F2560A;--amber-2:#FFB400;--teal:#0B6E6B;--cyan:#13B6A8;--red:#D7263D;--green:#1B7F4D;
+    --line:rgba(22,18,13,.10);--line-2:rgba(22,18,13,.18);--shadow:0 14px 40px -18px rgba(22,18,13,.45);
+    --tape:repeating-linear-gradient(45deg,#16120D 0 13px,#FFB400 13px 26px);
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --disp:'Archivo','Archivo Black',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--disp);background:var(--paper);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:46px 46px;}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(120% 80% at 80% -10%,rgba(242,86,10,.10),transparent 55%),radial-gradient(90% 70% at -10% 110%,rgba(11,110,107,.10),transparent 55%);}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  .mono{font-family:var(--mono)} .tape{height:14px;background:var(--tape);width:100%}
+  a{color:inherit}
+  section{scroll-margin-top:54px}
+
+  /* ---------- FIXED CREDIT HEADER ---------- */
+  .credit{position:sticky;top:0;z-index:60;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;
+    display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 24px;flex-wrap:wrap;box-shadow:0 2px 0 var(--amber-2);}
+  .credit b{color:var(--amber-2);font-weight:600} .credit a{color:var(--cyan);text-decoration:none}
+  .credit .dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;animation:pulse 2.2s infinite}
+  .credit nav{display:flex;gap:16px} .credit nav a{color:var(--paper);opacity:.7;text-decoration:none} .credit nav a:hover{opacity:1;color:var(--amber-2)}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(27,127,77,.55)}70%{box-shadow:0 0 0 9px rgba(27,127,77,0)}100%{box-shadow:0 0 0 0 rgba(27,127,77,0)}}
+
+  /* ---------- HERO ---------- */
+  header.hero{padding:56px 0 40px;position:relative}
+  .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--amber);font-weight:600;display:inline-flex;gap:10px;align-items:center;margin-bottom:18px}
+  .kicker::before{content:"";width:34px;height:2px;background:var(--amber)}
+  h1.title{font-family:var(--disp);font-weight:900;letter-spacing:-.02em;line-height:.95;font-size:clamp(38px,7.2vw,82px);text-transform:uppercase}
+  h1.title .hl{color:var(--amber);position:relative;display:inline-block}
+  h1.title .hl::after{content:"";position:absolute;left:-2%;right:-2%;bottom:6%;height:30%;background:rgba(255,180,0,.45);z-index:-1;transform:skewX(-6deg)}
+  .lede{max-width:700px;margin-top:24px;font-size:clamp(16px,2vw,19px);color:var(--ink-soft);font-weight:500}
+  .hero-tags{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+  .chip{font-family:var(--mono);font-size:12.5px;font-weight:500;padding:7px 13px;border:1.5px solid var(--ink);border-radius:999px;background:var(--paper);transition:.25s;cursor:default}
+  .chip:hover{background:var(--ink);color:var(--paper);transform:translateY(-2px)} .chip.solid{background:var(--ink);color:var(--paper)}
+  .hero-ticker{margin-top:36px;border:2px solid var(--ink);background:var(--paper);box-shadow:var(--shadow);display:grid;grid-template-columns:repeat(4,1fr)}
+  .ticker-cell{padding:18px 20px;border-right:1.5px solid var(--line-2)} .ticker-cell:last-child{border-right:none}
+  .ticker-cell .n{font-family:var(--disp);font-weight:900;font-size:clamp(24px,3.6vw,38px);line-height:1;letter-spacing:-.02em}
+  .ticker-cell .n.up{color:var(--green)} .ticker-cell .n.down{color:var(--amber)} .ticker-cell .n.neutral{color:var(--ink)}
+  .ticker-cell .l{font-family:var(--mono);font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.07em;margin-top:8px}
+
+  /* ---------- SECTIONS ---------- */
+  section{padding:58px 0;position:relative}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:30px;flex-wrap:wrap}
+  .sec-num{font-family:var(--mono);font-size:14px;color:var(--amber);font-weight:600;border:1.5px solid var(--amber);border-radius:6px;padding:3px 9px}
+  h2{font-family:var(--disp);font-weight:800;letter-spacing:-.015em;font-size:clamp(25px,4vw,42px);text-transform:uppercase;line-height:1}
+  .sec-sub{font-family:var(--mono);font-size:13px;color:var(--ink-faint);margin-left:auto;letter-spacing:.04em}
+  .lead{max-width:780px;color:var(--ink-soft);font-size:16.5px;font-weight:500;margin-bottom:8px}
+
+  /* sources */
+  .src-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-top:24px}
+  .src{border:2px solid var(--ink);background:var(--paper);padding:20px;transition:.25s;box-shadow:4px 4px 0 var(--ink)}
+  .src:hover{transform:translate(-3px,-3px);box-shadow:7px 7px 0 var(--amber)}
+  .src .tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);font-weight:600}
+  .src h3{font-family:var(--disp);font-weight:800;font-size:18px;margin:8px 0 6px}
+  .src p{font-size:14px;color:var(--ink-soft);font-weight:500}
+  .src a{display:inline-block;margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--amber);text-decoration:none;border-bottom:1.5px solid var(--amber);word-break:break-all}
+  .note{margin-top:22px;border-left:4px solid var(--amber);background:var(--paper-2);padding:16px 20px;font-size:14.5px;color:var(--ink-soft);font-weight:500}
+  .note b{color:var(--ink)}
+
+  /* goals */
+  .goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));border:2px solid var(--ink);box-shadow:var(--shadow)}
+  .goal{padding:24px;border-right:1.5px solid var(--line-2);background:var(--paper);position:relative;overflow:hidden} .goal:last-child{border-right:none}
+  .goal .ico{font-family:var(--mono);font-size:13px;color:var(--amber);font-weight:600;letter-spacing:.08em}
+  .goal h4{font-family:var(--disp);font-weight:800;font-size:17px;margin:10px 0 6px} .goal p{font-size:13.5px;color:var(--ink-soft);font-weight:500}
+  .goal .bar{position:absolute;left:0;bottom:0;height:5px;background:var(--amber);width:0;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+
+  /* phases / tech */
+  .phases{display:grid;grid-template-columns:repeat(5,1fr);border:2px solid var(--ink)}
+  .phase{padding:22px 18px;border-right:1.5px solid var(--line-2);background:var(--paper);transition:.25s;cursor:default} .phase:last-child{border-right:none}
+  .phase:hover{background:var(--ink);color:var(--paper)} .phase:hover .p-let{color:var(--amber-2)} .phase:hover p{color:var(--paper-2)} .phase:hover .p-tag{border-color:var(--amber-2);color:var(--amber-2)}
+  .p-let{font-family:var(--disp);font-weight:900;font-size:34px;line-height:1;color:var(--amber)}
+  .p-name{font-family:var(--disp);font-weight:800;font-size:16px;margin:8px 0 4px;text-transform:uppercase}
+  .phase p{font-size:13px;color:var(--ink-soft);font-weight:500;min-height:74px}
+  .p-tag{font-family:var(--mono);font-size:10.5px;border:1.5px solid var(--line-2);border-radius:5px;padding:3px 7px;display:inline-block;color:var(--ink-faint)}
+  .tech-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:24px}
+  .tech{border:1.5px solid var(--ink);padding:16px;background:var(--paper);transition:.25s} .tech:hover{background:var(--amber-2);transform:translateY(-3px)}
+  .tech .t-h{font-family:var(--mono);font-size:11px;color:var(--teal);font-weight:600;letter-spacing:.1em}
+  .tech h4{font-family:var(--disp);font-weight:800;font-size:16px;margin:6px 0 5px} .tech p{font-size:13px;color:var(--ink-soft);font-weight:500}
+  .tech:hover .t-h{color:var(--ink)} .tech:hover p{color:var(--ink)}
+
+  /* live summary bar */
+  .sumbar{display:grid;grid-template-columns:repeat(6,1fr);border:2px solid var(--ink);background:var(--ink);color:var(--paper);margin-bottom:18px;box-shadow:var(--shadow)}
+  .sumcell{padding:14px 16px;border-right:1px solid rgba(244,241,234,.15)} .sumcell:last-child{border-right:none}
+  .sumcell .sv{font-family:var(--disp);font-weight:900;font-size:clamp(18px,2.4vw,26px);line-height:1;letter-spacing:-.01em}
+  .sumcell .sv.warn{color:var(--amber-2)} .sumcell .sv.bad{color:#ff7a85} .sumcell .sv.ok{color:#7ee0a8}
+  .sumcell .sl{font-family:var(--mono);font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;margin-top:6px}
+
+  /* inventory */
+  .inv-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .inv-bar input,.inv-bar select{font-family:var(--mono);font-size:13px;padding:9px 12px;border:1.5px solid var(--ink);background:var(--paper);color:var(--ink)}
+  .inv-bar input{flex:1;min-width:180px}
+  .inv-bar input:focus,.inv-bar select:focus{outline:none;border-color:var(--amber);box-shadow:3px 3px 0 var(--amber)}
+  .inv-legend{display:flex;gap:14px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;width:100%;color:var(--ink-soft);margin-top:2px}
+  .lg{display:inline-flex;align-items:center;gap:6px} .lg i{width:11px;height:11px;display:inline-block;border:1px solid var(--ink)}
+  .lg .vig{background:var(--green)} .lg .prox{background:var(--amber-2)} .lg .crit{background:var(--red)}
+  .table-shell{border:2px solid var(--ink);box-shadow:var(--shadow);background:var(--paper);overflow-x:auto;max-height:660px;overflow-y:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:1080px}
+  thead th{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;text-align:left;background:var(--ink);color:var(--paper);padding:12px 12px;cursor:pointer;user-select:none;white-space:nowrap;position:sticky;top:0;z-index:2}
+  thead th:hover{color:var(--amber-2)} thead th .ar{opacity:.4;margin-left:3px}
+  tbody td{padding:10px 12px;border-bottom:1px solid var(--line);font-weight:500;vertical-align:middle;white-space:nowrap}
+  tbody tr{transition:background .12s} tbody tr:hover{background:var(--paper-2)}
+  .dci{font-weight:700;font-family:var(--disp);white-space:normal} .grp{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);display:block}
+  .sede{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--teal)}
+  .ubic{font-family:var(--mono);font-size:11.5px;background:var(--paper-2);border:1px solid var(--line-2);padding:2px 6px;border-radius:4px}
+  .abc{font-family:var(--mono);font-weight:600;font-size:12px;border-radius:5px;padding:2px 8px;border:1.5px solid}
+  .abc.A{color:var(--amber);border-color:var(--amber);background:rgba(242,86,10,.08)}
+  .abc.B{color:var(--teal);border-color:var(--teal);background:rgba(11,110,107,.08)}
+  .abc.C{color:var(--ink-faint);border-color:var(--ink-faint);background:rgba(139,132,117,.08)}
+  .stk{font-family:var(--mono);font-weight:600} .rop{font-family:var(--mono);color:var(--ink-faint)}
+  .est{font-family:var(--mono);font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:999px}
+  .est i{width:8px;height:8px;border-radius:50%}
+  .est.vig{background:rgba(27,127,77,.12);color:var(--green)} .est.vig i{background:var(--green)}
+  .est.prox{background:rgba(255,180,0,.18);color:#8a6a00} .est.prox i{background:var(--amber-2)}
+  .est.crit{background:rgba(215,38,61,.12);color:var(--red)} .est.crit i{background:var(--red);animation:pulse2 1.3s infinite}
+  @keyframes pulse2{50%{opacity:.3}}
+  .ss{font-family:var(--mono);font-size:10.5px;font-weight:600;padding:3px 7px;border-radius:4px;border:1px solid}
+  .ss.ok{color:var(--green);border-color:rgba(27,127,77,.4)} .ss.rop{color:var(--amber);border-color:var(--amber);background:rgba(242,86,10,.07)}
+  .ss.over{color:var(--teal);border-color:rgba(11,110,107,.4)} .ss.out{color:#fff;background:var(--red);border-color:var(--red)}
+  .dleft{font-family:var(--mono);font-weight:600}
+  .cold{font-family:var(--mono);font-size:9.5px;color:var(--cyan);border:1px solid var(--cyan);border-radius:4px;padding:1px 4px;margin-left:5px}
+  .pager{display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px}
+  .pager button{font-family:var(--mono);font-size:12.5px;padding:7px 12px;border:1.5px solid var(--ink);background:var(--paper);cursor:pointer;transition:.15s}
+  .pager button:hover:not(:disabled){background:var(--ink);color:var(--paper)} .pager button:disabled{opacity:.35;cursor:default}
+  .pager .pinfo{color:var(--ink-faint)} .pager .pright{margin-left:auto;color:var(--ink-faint)}
+
+  /* results */
+  .toggle{display:inline-flex;border:2px solid var(--ink);font-family:var(--mono);font-size:13px;font-weight:600;margin-bottom:24px;box-shadow:3px 3px 0 var(--ink)}
+  .toggle button{padding:10px 22px;background:var(--paper);border:none;cursor:pointer;color:var(--ink);font:inherit;transition:.2s} .toggle button.on{background:var(--ink);color:var(--amber-2)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:16px}
+  .kpi{border:2px solid var(--ink);background:var(--paper);padding:20px;box-shadow:4px 4px 0 var(--ink);transition:.25s}
+  .kpi:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--teal)}
+  .kpi .k-l{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);min-height:30px}
+  .kpi .k-v{font-family:var(--disp);font-weight:900;font-size:clamp(28px,4.2vw,44px);line-height:1;letter-spacing:-.02em;margin:10px 0 4px}
+  .kpi .k-d{font-family:var(--mono);font-size:12px;font-weight:600} .kpi .k-d.good{color:var(--green)} .kpi .k-d.bad{color:var(--red)}
+  .kpi .k-base{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:2px}
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:32px}
+  .card{border:2px solid var(--ink);background:var(--paper);padding:22px;box-shadow:var(--shadow)}
+  .card.full{grid-column:1/-1}
+  .card h3{font-family:var(--disp);font-weight:800;font-size:18px;letter-spacing:-.01em;margin-bottom:4px}
+  .card .c-sub{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);margin-bottom:16px}
+  .card svg{width:100%;height:auto;display:block}
+
+  /* control work */
+  .ctrl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:30px}
+  .cwork{border:2px solid var(--ink);background:var(--paper);padding:20px;position:relative;box-shadow:4px 4px 0 var(--ink)}
+  .cwork .cw-h{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--teal);font-weight:600}
+  .cwork h4{font-family:var(--disp);font-weight:800;font-size:17px;margin:8px 0 8px}
+  .cwork ul{list-style:none;font-size:13.5px;color:var(--ink-soft);font-weight:500}
+  .cwork li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--line)}
+  .cwork li:last-child{border-bottom:none} .cwork li b{font-family:var(--mono);color:var(--ink);font-weight:600}
+  .cwork .big{font-family:var(--disp);font-weight:900;font-size:34px;line-height:1;letter-spacing:-.02em;margin:6px 0}
+  .cwork .big.ok{color:var(--green)} .cwork .big.warn{color:var(--amber)}
+  .plan-shell{border:2px solid var(--ink);box-shadow:var(--shadow);background:var(--paper);overflow-x:auto;margin-bottom:30px}
+  .plan{width:100%;border-collapse:collapse;font-size:13px;min-width:880px}
+  .plan th{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;text-align:left;background:var(--ink);color:var(--paper);padding:12px}
+  .plan td{padding:11px 12px;border-bottom:1px solid var(--line);font-weight:500;vertical-align:top}
+  .plan td:first-child{font-weight:700;font-family:var(--disp)} .plan tr:hover{background:var(--paper-2)}
+  .plan .spec{font-family:var(--mono);color:var(--amber);font-weight:600}
+
+  /* pitch */
+  .pitch{background:var(--ink);color:var(--paper);border:2px solid var(--ink);box-shadow:var(--shadow);overflow:hidden}
+  .pitch .ptape{height:14px;background:var(--tape)} .pitch .pbody{padding:40px}
+  .pitch h2{color:var(--paper)} .pitch h2 .hl{color:var(--amber-2)}
+  .pitch .plead{max-width:660px;color:var(--paper-2);font-size:16.5px;font-weight:500;margin:18px 0 26px}
+  .skills{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:30px}
+  .sk{font-family:var(--mono);font-size:12.5px;padding:7px 13px;border:1.5px solid rgba(244,241,234,.3);border-radius:999px;transition:.2s} .sk:hover{background:var(--amber-2);color:var(--ink);border-color:var(--amber-2)}
+  .pcta{display:flex;flex-wrap:wrap;gap:14px}
+  .btn{font-family:var(--mono);font-weight:600;font-size:14px;padding:14px 24px;background:var(--amber);color:var(--ink);text-decoration:none;border:2px solid var(--amber);transition:.2s;display:inline-flex;gap:8px;align-items:center}
+  .btn:hover{background:transparent;color:var(--amber)}
+  .btn.ghost{background:transparent;color:var(--paper);border-color:rgba(244,241,234,.4)} .btn.ghost:hover{border-color:var(--amber-2);color:var(--amber-2)}
+
+  footer{padding:46px 0 60px;border-top:2px solid var(--ink);margin-top:56px}
+  footer .f-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:30px}
+  footer h4{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--amber);margin-bottom:14px}
+  footer p,footer li{font-size:13px;color:var(--ink-soft);font-weight:500;line-height:1.7} footer ul{list-style:none}
+  footer a{color:var(--teal);text-decoration:none;border-bottom:1px solid var(--line-2);word-break:break-all}
+  .disclaimer{margin-top:26px;font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);line-height:1.7;border-top:1px solid var(--line);padding-top:18px}
+
+  .rv{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1)} .rv.in{opacity:1;transform:none}
+
+  @media(max-width:900px){.hero-ticker{grid-template-columns:1fr 1fr}.ticker-cell:nth-child(2){border-right:none}
+    .phases{grid-template-columns:1fr 1fr}.charts{grid-template-columns:1fr}.sumbar{grid-template-columns:repeat(3,1fr)}footer .f-grid{grid-template-columns:1fr}}
+  @media(max-width:560px){.hero-ticker,.sumbar{grid-template-columns:1fr 1fr}.phases{grid-template-columns:1fr}.credit nav{display:none}}
+</style>
+</head>
+<body>
+
+<div class="credit">
+  <span><span class="dot"></span>CREADO POR <b>PIERRE&nbsp;R.</b> · GESTIÓN DE ALMACENES</span>
+  <nav><a href="#datos">Datos</a><a href="#almacen">Almacén</a><a href="#resultados">Resultados</a><a href="#control">Control</a><a href="#contacto">Contacto</a></nav>
+  <span>✉ <a href="mailto:peru.labs.pe@gmail.com">peru.labs.pe@gmail.com</a></span>
+</div>
+<div class="tape"></div>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="kicker">Caso de demostración · Red logística farmacéutica</span>
+    <h1 class="title rv">Gestión de almacenes<br>de <span class="hl">alto desempeño</span></h1>
+    <p class="lede rv">Operación y control de una <b>red de 5 almacenes</b> con más de <b id="ledePos">600</b> posiciones de inventario y <b id="ledeSku">150</b> SKU, sobre el <b>catálogo público de medicamentos esenciales del Perú</b> — con clasificación ABC por valor, política <b>FEFO</b> (norma BPA) y <b>Six Sigma (DMAIC)</b> para llevar el proceso de 2.6σ a 4.8σ.</p>
+    <div class="hero-tags rv">
+      <span class="chip solid">Six Sigma · DMAIC</span><span class="chip">ABC por valor · Pareto</span>
+      <span class="chip">FEFO · BPA (RM 132-2015/MINSA)</span><span class="chip">Min–Máx · Punto de reorden</span>
+      <span class="chip">Slotting multi-almacén</span><span class="chip">Conteo cíclico · Plan de control</span>
+    </div>
+    <div class="hero-ticker rv">
+      <div class="ticker-cell"><div class="n down" data-count="0.8" data-suffix="%" data-dec="1">0%</div><div class="l">Mermas por vencimiento</div></div>
+      <div class="ticker-cell"><div class="n up" data-count="99.2" data-suffix="%" data-dec="1">0%</div><div class="l">Exactitud de inventario (ERI)</div></div>
+      <div class="ticker-cell"><div class="n up" data-count="8.6" data-suffix="×" data-dec="1">0×</div><div class="l">Rotación anual</div></div>
+      <div class="ticker-cell"><div class="n up" data-count="4.8" data-suffix="σ" data-dec="1">0σ</div><div class="l">Nivel Sigma alcanzado</div></div>
+    </div>
+  </div>
+</header>
+
+<section id="datos">
+  <div class="wrap rv">
+    <div class="sec-head"><span class="sec-num">01</span><h2>De dónde salen los datos</h2><span class="sec-sub">Datos abiertos · no sintéticos</span></div>
+    <p class="lead">El <b>maestro de productos (SKU)</b> — nombres en Denominación Común Internacional, grupo terapéutico y presentación — proviene de catálogos públicos reales del Estado peruano. Sobre esa base se modela una operación de almacén a escala.</p>
+    <div class="src-grid">
+      <div class="src"><span class="tag">MINSA · Repositorio de Datos</span><h3>Catálogo de Productos Farmacéuticos</h3><p>Catálogo oficial con codificación SISMED. Acceso abierto.</p><a href="https://datos.minsa.gob.pe/dataset/catalogo-de-productos-farmaceuticos" target="_blank" rel="noopener">datos.minsa.gob.pe</a></div>
+      <div class="src"><span class="tag">DIGEMID · MINSA</span><h3>Observatorio de Precios</h3><p>Más de 16 000 productos; base descargable en Excel.</p><a href="http://observatorio.digemid.minsa.gob.pe/" target="_blank" rel="noopener">observatorio.digemid.minsa.gob.pe</a></div>
+      <div class="src"><span class="tag">DIGEMID · 2023</span><h3>Petitorio Nacional Único (PNUME)</h3><p>Medicamentos esenciales para el sector salud, Perú.</p><a href="https://repositorio-digemid.minsa.gob.pe/" target="_blank" rel="noopener">repositorio-digemid.minsa.gob.pe</a></div>
+      <div class="src"><span class="tag">DIGEMID · Ley 32033</span><h3>Esenciales genéricos (DCI)</h3><p>Listado en DCI de medicamentos genéricos garantizados.</p><a href="https://www.digemid.minsa.gob.pe/webDigemid/acceso-y-uso/listado-de-medicamentos-esenciales-genericos/" target="_blank" rel="noopener">digemid.minsa.gob.pe</a></div>
+    </div>
+    <div class="note"><b>Transparencia metodológica.</b> Los <b id="noteSku">~150</b> nombres en DCI, presentaciones y grupos terapéuticos son <b>datos públicos reales</b> de las fuentes citadas. Los valores operativos del almacén (stocks, lotes, fechas de vencimiento, ubicaciones, demanda, precios y KPIs) son una <b>simulación de demostración</b> generada de forma determinística sobre ese catálogo real para ilustrar la metodología — no representan inventarios institucionales reales.</div>
+  </div>
+</section>
+
+<div class="tape"></div>
+
+<section id="metas">
+  <div class="wrap rv">
+    <div class="sec-head"><span class="sec-num">02</span><h2>Metas del proyecto</h2><span class="sec-sub">Define · voz del proceso</span></div>
+    <p class="lead">Cuatro objetivos medibles guían el rediseño. Cada uno tiene línea base, meta e indicador de control.</p>
+    <div class="goals">
+      <div class="goal"><div class="ico">META 01</div><h4>Cero mermas evitables</h4><p>Reducir pérdidas por vencimiento de 6.4% a &lt;1% con rotación FEFO.</p><div class="bar" data-w="88%"></div></div>
+      <div class="goal"><div class="ico">META 02</div><h4>Inventario confiable</h4><p>Elevar la exactitud de registro (ERI) de 82% a ≥99% con conteo cíclico.</p><div class="bar" data-w="99%"></div></div>
+      <div class="goal"><div class="ico">META 03</div><h4>Disponibilidad total</h4><p>Eliminar quiebres de ítems clase A con políticas Min–Máx y punto de reorden.</p><div class="bar" data-w="92%"></div></div>
+      <div class="goal"><div class="ico">META 04</div><h4>Capital que rota</h4><p>Más que duplicar la rotación para liberar capital inmovilizado.</p><div class="bar" data-w="80%"></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="metodo">
+  <div class="wrap rv">
+    <div class="sec-head"><span class="sec-num">03</span><h2>Fases y procesos</h2><span class="sec-sub">Six Sigma DMAIC + ciclo PHVA</span></div>
+    <p class="lead">El proyecto recorre las cinco fases de <b>Six Sigma (DMAIC)</b>, alineadas con el ciclo <b>PHVA</b>. Una idea por fase.</p>
+    <div class="phases">
+      <div class="phase"><div class="p-let">D</div><div class="p-name">Definir</div><p>Alcance, metas y SKU críticos a partir del catálogo público.</p><span class="p-tag">PHVA · Planificar</span></div>
+      <div class="phase"><div class="p-let">M</div><div class="p-name">Medir</div><p>Línea base: ERI, mermas, rotación y quiebres en los 5 almacenes.</p><span class="p-tag">PHVA · Planificar</span></div>
+      <div class="phase"><div class="p-let">A</div><div class="p-name">Analizar</div><p>Pareto de causas y análisis ABC por valor para enfocar el 80%.</p><span class="p-tag">PHVA · Hacer</span></div>
+      <div class="phase"><div class="p-let">I</div><div class="p-name">Mejorar</div><p>FEFO, slotting, Min–Máx y punto de reorden por clase ABC.</p><span class="p-tag">PHVA · Hacer</span></div>
+      <div class="phase"><div class="p-let">C</div><div class="p-name">Controlar</div><p>Conteo cíclico, cartas de control y plan de control documentado.</p><span class="p-tag">PHVA · Verificar/Actuar</span></div>
+    </div>
+    <div class="tech-grid">
+      <div class="tech"><div class="t-h">QUÉ SE APLICÓ</div><h4>ABC por valor</h4><p>Pareto sobre el valor inmovilizado: A=80%, B=15%, C=5% — calculado en vivo.</p></div>
+      <div class="tech"><div class="t-h">QUÉ SE APLICÓ</div><h4>Política FEFO</h4><p>"Primero que expira, primero que sale", exigida por la BPA (RM 132-2015).</p></div>
+      <div class="tech"><div class="t-h">QUÉ SE APLICÓ</div><h4>Min–Máx + Reorden</h4><p>Stock de seguridad y punto de reorden por SKU contra la demanda.</p></div>
+      <div class="tech"><div class="t-h">QUÉ SE APLICÓ</div><h4>Slotting multi-almacén</h4><p>Ubicación por rotación y zona de cadena de frío (2–8°C) en 5 sedes.</p></div>
+      <div class="tech"><div class="t-h">QUÉ SE APLICÓ</div><h4>Conteo cíclico</h4><p>A diario, B semanal, C mensual — sostiene el ERI sin parar la operación.</p></div>
+      <div class="tech"><div class="t-h">QUÉ SE APLICÓ</div><h4>Tablero de control</h4><p>KPIs y cartas de control en vivo para decisiones de coordinación.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="tape"></div>
+
+<section id="almacen">
+  <div class="wrap rv">
+    <div class="sec-head"><span class="sec-num">04</span><h2>El almacén, en vivo</h2><span class="sec-sub" id="invClock">Caducidad calculada a hoy</span></div>
+    <p class="lead">Inventario a nivel de <b>lote y ubicación</b> en 5 almacenes, clasificado por ABC de valor y con control FEFO. Los días para vencer se calculan en tiempo real; el estado FEFO sigue la política de vencimiento (≤30 d crítico · ≤180 d próximo) y el estado de stock compara contra el punto de reorden.</p>
+
+    <div class="sumbar" id="sumbar"></div>
+
+    <div class="inv-bar">
+      <input id="fSearch" type="text" placeholder="Buscar medicamento (DCI) o grupo…" aria-label="Buscar">
+      <select id="fSede" aria-label="Almacén"><option value="">Almacén · todos</option></select>
+      <select id="fABC" aria-label="Clase ABC"><option value="">ABC · todas</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select>
+      <select id="fEst" aria-label="Estado FEFO"><option value="">FEFO · todos</option><option value="crit">Crítico</option><option value="prox">Próximo</option><option value="vig">Vigente</option></select>
+      <select id="fStk" aria-label="Estado stock"><option value="">Stock · todos</option><option value="out">Quiebre</option><option value="rop">Bajo ROP</option><option value="over">Sobre-stock</option><option value="ok">OK</option></select>
+      <div class="inv-legend"><span class="lg"><i class="vig"></i>Vigente</span><span class="lg"><i class="prox"></i>Próximo (≤180d)</span><span class="lg"><i class="crit"></i>Crítico (≤30d)</span><span style="margin-left:auto">SKU base: catálogo público MINSA/DIGEMID · operación: demostración modelada</span></div>
+    </div>
+
+    <div class="table-shell">
+      <table id="invTable">
+        <thead><tr>
+          <th data-k="dci">Medicamento (DCI)<span class="ar">↕</span></th>
+          <th data-k="sede">Almacén<span class="ar">↕</span></th>
+          <th data-k="ubic">Ubicación<span class="ar">↕</span></th>
+          <th data-k="abc">ABC<span class="ar">↕</span></th>
+          <th data-k="stock">Stock<span class="ar">↕</span></th>
+          <th data-k="rop">ROP<span class="ar">↕</span></th>
+          <th data-k="lote">Lote<span class="ar">↕</span></th>
+          <th data-k="dias">Vence (días)<span class="ar">↕</span></th>
+          <th data-k="estado">FEFO<span class="ar">↕</span></th>
+          <th data-k="stkEstadoOrd">Estado stock<span class="ar">↕</span></th>
+        </tr></thead>
+        <tbody id="invBody"></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <button id="pgFirst">«</button><button id="pgPrev">‹ Anterior</button>
+      <span class="pinfo" id="pgInfo">—</span>
+      <button id="pgNext">Siguiente ›</button><button id="pgLast">»</button>
+      <span class="pright" id="pgStat">—</span>
+    </div>
+  </div>
+</section>
+
+<section id="resultados">
+  <div class="wrap rv">
+    <div class="sec-head"><span class="sec-num">05</span><h2>Resultados</h2><span class="sec-sub">Impacto del rediseño</span></div>
+    <p class="lead">Comparación antes/después de los indicadores clave del almacén.</p>
+    <div class="toggle" role="tablist"><button id="tgBefore" role="tab">Antes</button><button id="tgAfter" class="on" role="tab">Después</button></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="charts">
+      <div class="card"><h3>Pareto de causas de merma</h3><div class="c-sub">Fase Analizar · el 80% de la pérdida viene de 3 causas</div><svg id="paretoSvg" viewBox="0 0 520 300"></svg></div>
+      <div class="card"><h3>ABC por valor (curva de Pareto)</h3><div class="c-sub">Fase Analizar · clasificación calculada del inventario real</div><svg id="abcSvg" viewBox="0 0 520 300"></svg></div>
+      <div class="card"><h3>Antes vs. después</h3><div class="c-sub">Indicadores clave del almacén</div><svg id="baSvg" viewBox="0 0 520 300"></svg></div>
+      <div class="card"><h3>Nivel Sigma del proceso</h3><div class="c-sub">Capacidad: de 2.6σ a 4.8σ</div><svg id="gaugeSvg" viewBox="0 0 520 300"></svg></div>
+    </div>
+  </div>
+</section>
+
+<div class="tape"></div>
+
+<section id="control">
+  <div class="wrap rv">
+    <div class="sec-head"><span class="sec-num">06</span><h2>Trabajo de control realizado</h2><span class="sec-sub">Fase Controlar · sostener el proceso</span></div>
+    <p class="lead">El control no es un número final: es un sistema de actividades que mantiene el proceso bajo control estadístico. Esto es lo que se implementó y se computa en vivo sobre el inventario.</p>
+
+    <div class="ctrl-grid">
+      <div class="cwork"><div class="cw-h">Tablero de inventario</div><h4>Estado de la red</h4>
+        <ul>
+          <li>Posiciones monitoreadas <b id="cwPos">—</b></li>
+          <li>SKU únicos <b id="cwSku">—</b></li>
+          <li>Valor inmovilizado <b id="cwVal">—</b></li>
+          <li>Valor en riesgo (FEFO) <b id="cwRiesgo">—</b></li>
+        </ul></div>
+      <div class="cwork"><div class="cw-h">Conteo cíclico</div><h4>Cobertura del ciclo</h4>
+        <div class="big ok">100%</div>
+        <ul>
+          <li>Clase A · diario <b id="ccA">—</b></li>
+          <li>Clase B · semanal <b id="ccB">—</b></li>
+          <li>Clase C · mensual <b id="ccC">—</b></li>
+          <li>Discrepancias del mes <b id="ccDisc">—</b></li>
+        </ul></div>
+      <div class="cwork"><div class="cw-h">Alertas FEFO automáticas</div><h4>Caducidad bajo vigilancia</h4>
+        <div class="big warn" id="cwAlert">—</div>
+        <ul>
+          <li>Lotes críticos (≤30 d) <b id="cwCrit">—</b></li>
+          <li>Lotes próximos (≤180 d) <b id="cwProx">—</b></li>
+          <li>Acción <b>reubicar / despachar / baja</b></li>
+        </ul></div>
+      <div class="cwork"><div class="cw-h">Reposición Min–Máx</div><h4>Disponibilidad</h4>
+        <ul>
+          <li>Posiciones bajo ROP <b id="cwRop">—</b></li>
+          <li>Quiebres de stock <b id="cwOut">—</b></li>
+          <li>Sobre-stock <b id="cwOver">—</b></li>
+          <li>ERI sostenido <b style="color:var(--green)">99.2%</b></li>
+        </ul></div>
+    </div>
+
+    <h3 style="font-family:var(--disp);font-weight:800;font-size:20px;margin-bottom:14px">Plan de control (Control Plan)</h3>
+    <div class="plan-shell">
+      <table class="plan"><thead><tr>
+        <th>Variable de control</th><th>Especificación / Meta</th><th>Frecuencia</th><th>Método de medición</th><th>Responsable</th><th>Reacción ante desvío</th>
+      </tr></thead><tbody>
+        <tr><td>Exactitud de inventario (ERI)</td><td class="spec">≥ 99%</td><td>Mensual (ciclo ABC)</td><td>Conteo físico vs. sistema</td><td>Coordinación de almacén</td><td>Recuento, ajuste y análisis de causa raíz</td></tr>
+        <tr><td>Caducidad (FEFO)</td><td class="spec">0 vencidos · alerta ≤180 d</td><td>Diaria</td><td>Reporte FEFO automatizado</td><td>Químico farmacéutico</td><td>Priorizar despacho, reubicar o dar de baja</td></tr>
+        <tr><td>Nivel de servicio (fill rate)</td><td class="spec">≥ 99%</td><td>Semanal</td><td>Atendidos / solicitados</td><td>Logística</td><td>Reorden urgente de clase A</td></tr>
+        <tr><td>Punto de reorden</td><td class="spec">Stock ≥ ROP</td><td>Diaria</td><td>Alerta del sistema Min–Máx</td><td>Logística</td><td>Generar requerimiento de compra</td></tr>
+        <tr><td>Condiciones de almacenamiento</td><td class="spec">15–25°C · frío 2–8°C</td><td>Continua</td><td>Data-logger / termohigrómetro</td><td>Químico farmacéutico</td><td>Acción correctiva y registro de incidente</td></tr>
+        <tr><td>Cumplimiento BPA</td><td class="spec">≥ 90%</td><td>Trimestral</td><td>Autoinspección 9 componentes</td><td>Aseguramiento de la calidad</td><td>Plan de mejora (CAPA)</td></tr>
+      </tbody></table>
+    </div>
+
+    <div class="charts">
+      <div class="card"><h3>Carta de control · ERI semanal</h3><div class="c-sub">El proceso vuelve dentro de los límites UCL/LCL</div><svg id="controlSvg" viewBox="0 0 520 300"></svg></div>
+      <div class="card"><h3>Auditoría BPA · 9 componentes</h3><div class="c-sub">Cumplimiento alcanzado tras el proyecto (RM 132-2015/MINSA)</div><svg id="bpaSvg" viewBox="0 0 520 360"></svg></div>
+    </div>
+  </div>
+</section>
+
+<div class="tape"></div>
+
+<section id="contacto">
+  <div class="wrap rv">
+    <div class="pitch"><div class="ptape"></div><div class="pbody">
+      <div class="sec-head" style="margin-bottom:0"><span class="sec-num" style="color:var(--amber-2);border-color:var(--amber-2)">07</span><h2>¿Tu almacén <span class="hl">pierde dinero</span> sin que lo veas?</h2></div>
+      <p class="plead">Convierto inventarios desordenados en operaciones medibles y controladas: menos mermas, más rotación, disponibilidad sostenida y datos confiables para decidir. Gestión por procesos + Six Sigma + analítica e IA aplicada.</p>
+      <div class="skills">
+        <span class="sk">Gestión por procesos · BPMN 2.0</span><span class="sk">Six Sigma · DMAIC / PHVA</span>
+        <span class="sk">ABC · FEFO · BPA</span><span class="sk">Power BI · Excel avanzado · SQL</span>
+        <span class="sk">Tableros y plan de control</span><span class="sk">Automatización · IA aplicada</span>
+      </div>
+      <div class="pcta"><a class="btn" href="mailto:peru.labs.pe@gmail.com?subject=Consultoría%20en%20gestión%20de%20almacenes">✉ Conversemos del proyecto</a><a class="btn ghost" href="#datos">Ver metodología ↑</a></div>
+    </div></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div><h4>Fuente de datos (de dónde se obtuvieron para simular)</h4>
+        <ul>
+          <li>Catálogo de Productos Farmacéuticos — MINSA, Repositorio de Datos (SISMED): <a href="https://datos.minsa.gob.pe/dataset/catalogo-de-productos-farmaceuticos" target="_blank" rel="noopener">datos.minsa.gob.pe</a></li>
+          <li>Observatorio de Precios de Medicamentos — DIGEMID/MINSA: <a href="http://observatorio.digemid.minsa.gob.pe/" target="_blank" rel="noopener">observatorio.digemid.minsa.gob.pe</a></li>
+          <li>Petitorio Nacional Único de Medicamentos Esenciales (PNUME, 2023) — DIGEMID</li>
+          <li>Listado de medicamentos esenciales genéricos (Ley 32033) — DIGEMID</li>
+          <li>Norma de almacenamiento: Manual de Buenas Prácticas de Almacenamiento (BPA), RM N° 132-2015/MINSA — define los sistemas FEFO/FIFO.</li>
+        </ul></div>
+      <div><h4>Autor</h4>
+        <p><b>Pierre R.</b> — Ingeniería Industrial · gestión por procesos, mejora continua y transformación digital.</p>
+        <p>✉ <a href="mailto:peru.labs.pe@gmail.com">peru.labs.pe@gmail.com</a></p>
+        <p style="margin-top:10px;font-family:var(--mono);font-size:11.5px;color:var(--ink-faint)">Página estática · lista para GitHub Pages · funciona offline.</p></div>
+    </div>
+    <p class="disclaimer">Aviso: este es un <b>caso de demostración de portafolio</b>. El maestro de productos (nombres en DCI, grupo terapéutico y presentación) corresponde a datos públicos reales del Estado peruano citados arriba. Los valores operativos (stocks, lotes, ubicaciones, fechas de vencimiento, demanda, precios, KPIs y gráficos) son una simulación modelada con fines ilustrativos y <b>no representan inventarios ni cifras institucionales reales</b>. Las marcas y entidades mencionadas pertenecen a sus titulares.</p>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   MAESTRO REAL: medicamentos esenciales (DCI) — [nombre, grupo, precioRefS/, frío(0/1)]
+   Nombres/grupos = datos públicos (PNUME / listado genéricos DIGEMID / OMS).
+============================================================ */
+const POOL=[
+["Paracetamol 500 mg tableta","Analgésico/Antipirético",0.06,0],["Paracetamol 120 mg/5mL jarabe","Analgésico/Antipirético",4.20,0],
+["Ibuprofeno 400 mg tableta","AINE",0.12,0],["Ibuprofeno 100 mg/5mL suspensión","AINE",6.10,0],["Naproxeno 550 mg tableta","AINE",0.30,0],
+["Diclofenaco 50 mg tableta","AINE",0.10,0],["Diclofenaco 75 mg/3mL inyectable","AINE",1.20,0],["Ketorolaco 30 mg/mL inyectable","AINE",1.80,0],
+["Ketoprofeno 100 mg inyectable","AINE",2.10,0],["Metamizol sódico 1 g/2mL inyectable","Analgésico",1.10,0],["Meloxicam 15 mg tableta","AINE",0.45,0],
+["Celecoxib 200 mg cápsula","AINE",1.30,0],["Tramadol 50 mg/mL inyectable","Analgésico",1.60,0],["Tramadol 50 mg cápsula","Analgésico",0.40,0],
+["Morfina 10 mg/mL inyectable","Analgésico",3.20,0],["Codeína 30 mg tableta","Analgésico",0.55,0],["Ácido acetilsalicílico 100 mg tableta","Antiagregante",0.05,0],
+["Amoxicilina 500 mg cápsula","Antibiótico",0.18,0],["Amoxicilina 250 mg/5mL suspensión","Antibiótico",7.50,0],["Amoxicilina+Ác. clavulánico 875/125 mg","Antibiótico",1.60,0],
+["Ampicilina 1 g inyectable","Antibiótico",1.10,0],["Cloxacilina 500 mg cápsula","Antibiótico",0.40,0],["Penicilina G benzatínica 1.2M UI","Antibiótico",2.30,0],
+["Cefalexina 500 mg cápsula","Antibiótico",0.50,0],["Cefazolina 1 g inyectable","Antibiótico",2.80,0],["Ceftriaxona 1 g inyectable","Antibiótico",2.60,0],
+["Cefotaxima 1 g inyectable","Antibiótico",3.10,0],["Cefuroxima 500 mg tableta","Antibiótico",1.40,0],["Azitromicina 500 mg tableta","Antibiótico",1.00,0],
+["Eritromicina 500 mg tableta","Antibiótico",0.60,0],["Claritromicina 500 mg tableta","Antibiótico",1.50,0],["Ciprofloxacino 500 mg tableta","Antibiótico",0.35,0],
+["Levofloxacino 500 mg tableta","Antibiótico",1.20,0],["Gentamicina 80 mg/2mL inyectable","Antibiótico",0.90,0],["Amikacina 500 mg inyectable","Antibiótico",2.20,0],
+["Clindamicina 600 mg inyectable","Antibiótico",3.40,0],["Metronidazol 500 mg tableta","Antibiótico/Antiparasitario",0.30,0],["Metronidazol 500 mg/100mL inyectable","Antibiótico",4.50,0],
+["Doxiciclina 100 mg cápsula","Antibiótico",0.40,0],["Cotrimoxazol 800/160 mg tableta","Antibiótico",0.25,0],["Nitrofurantoína 100 mg cápsula","Antibiótico",0.50,0],
+["Vancomicina 500 mg inyectable","Antibiótico",9.80,0],["Meropenem 1 g inyectable","Antibiótico",18.00,0],["Cloranfenicol 1 g inyectable","Antibiótico",2.10,0],
+["Isoniazida 100 mg tableta","Antituberculoso",0.08,0],["Rifampicina 300 mg cápsula","Antituberculoso",0.60,0],["Pirazinamida 500 mg tableta","Antituberculoso",0.35,0],
+["Etambutol 400 mg tableta","Antituberculoso",0.40,0],["Estreptomicina 1 g inyectable","Antituberculoso",3.50,0],
+["Fluconazol 150 mg cápsula","Antifúngico",0.80,0],["Ketoconazol 200 mg tableta","Antifúngico",0.60,0],["Nistatina 100 000 UI/mL suspensión","Antifúngico",6.50,0],
+["Clotrimazol 1% crema","Antifúngico",4.20,0],["Itraconazol 100 mg cápsula","Antifúngico",2.10,0],["Anfotericina B 50 mg inyectable","Antifúngico",22.00,0],
+["Aciclovir 200 mg tableta","Antiviral",0.45,0],["Aciclovir 250 mg inyectable","Antiviral",5.60,0],["Oseltamivir 75 mg cápsula","Antiviral",3.80,0],
+["Lamivudina 150 mg tableta","Antiviral",1.10,0],["Tenofovir 300 mg tableta","Antiviral",1.40,0],["Efavirenz 600 mg tableta","Antiviral",1.70,0],
+["Albendazol 200 mg tableta","Antiparasitario",0.30,0],["Mebendazol 100 mg tableta","Antiparasitario",0.25,0],["Ivermectina 6 mg tableta","Antiparasitario",0.90,0],
+["Praziquantel 600 mg tableta","Antiparasitario",2.40,0],["Nitazoxanida 500 mg tableta","Antiparasitario",1.20,0],["Cloroquina 250 mg tableta","Antiparasitario",0.50,0],
+["Primaquina 15 mg tableta","Antiparasitario",0.70,0],["Artesunato 60 mg inyectable","Antiparasitario",8.50,0],
+["Enalapril 10 mg tableta","Cardiovascular",0.10,0],["Enalapril 20 mg tableta","Cardiovascular",0.14,0],["Captopril 25 mg tableta","Cardiovascular",0.08,0],
+["Losartán 50 mg tableta","Cardiovascular",0.18,0],["Losartán 100 mg tableta","Cardiovascular",0.26,0],["Valsartán 160 mg tableta","Cardiovascular",0.60,0],
+["Amlodipino 5 mg tableta","Cardiovascular",0.12,0],["Amlodipino 10 mg tableta","Cardiovascular",0.18,0],["Nifedipino 10 mg tableta","Cardiovascular",0.20,0],
+["Atenolol 50 mg tableta","Cardiovascular",0.10,0],["Metoprolol 50 mg tableta","Cardiovascular",0.22,0],["Carvedilol 25 mg tableta","Cardiovascular",0.40,0],
+["Propranolol 40 mg tableta","Cardiovascular",0.12,0],["Hidroclorotiazida 25 mg tableta","Cardiovascular",0.06,0],["Furosemida 40 mg tableta","Cardiovascular",0.10,0],
+["Furosemida 20 mg/2mL inyectable","Cardiovascular",0.80,0],["Espironolactona 25 mg tableta","Cardiovascular",0.30,0],["Clortalidona 50 mg tableta","Cardiovascular",0.25,0],
+["Digoxina 0.25 mg tableta","Cardiovascular",0.20,0],["Verapamilo 80 mg tableta","Cardiovascular",0.35,0],["Isosorbida dinitrato 10 mg tableta","Cardiovascular",0.30,0],
+["Hidralazina 25 mg tableta","Cardiovascular",0.40,0],["Atorvastatina 20 mg tableta","Hipolipemiante",0.45,0],["Atorvastatina 40 mg tableta","Hipolipemiante",0.70,0],
+["Simvastatina 20 mg tableta","Hipolipemiante",0.40,0],["Rosuvastatina 10 mg tableta","Hipolipemiante",0.90,0],["Gemfibrozilo 600 mg tableta","Hipolipemiante",0.55,0],
+["Warfarina 5 mg tableta","Anticoagulante",0.30,0],["Heparina 5000 UI/mL inyectable","Anticoagulante",6.50,1],["Enoxaparina 40 mg jeringa","Anticoagulante",14.00,1],
+["Clopidogrel 75 mg tableta","Antiagregante",0.80,0],
+["Metformina 850 mg tableta","Antidiabético",0.12,0],["Metformina 1000 mg tableta","Antidiabético",0.16,0],["Glibenclamida 5 mg tableta","Antidiabético",0.08,0],
+["Glimepirida 2 mg tableta","Antidiabético",0.30,0],["Insulina NPH 100 UI/mL inyectable","Antidiabético",18.00,1],["Insulina regular 100 UI/mL inyectable","Antidiabético",19.00,1],
+["Salbutamol 100 mcg inhalador","Respiratorio",9.50,0],["Salbutamol 5 mg/mL solución nebulizar","Respiratorio",5.20,0],["Bromuro de ipratropio inhalador","Respiratorio",12.00,0],
+["Beclometasona 250 mcg inhalador","Respiratorio",14.00,0],["Budesonida 200 mcg inhalador","Respiratorio",16.00,0],["Salmeterol+Fluticasona inhalador","Respiratorio",38.00,0],
+["Teofilina 200 mg tableta","Respiratorio",0.30,0],["Montelukast 10 mg tableta","Respiratorio",0.90,0],
+["Omeprazol 20 mg cápsula","Gastrointestinal",0.20,0],["Omeprazol 40 mg inyectable","Gastrointestinal",4.20,0],["Pantoprazol 40 mg tableta","Gastrointestinal",0.55,0],
+["Esomeprazol 40 mg tableta","Gastrointestinal",0.95,0],["Metoclopramida 10 mg/2mL inyectable","Gastrointestinal",0.60,0],["Ondansetrón 8 mg/4mL inyectable","Gastrointestinal",2.30,0],
+["Dimenhidrinato 50 mg tableta","Gastrointestinal",0.25,0],["Loperamida 2 mg cápsula","Gastrointestinal",0.20,0],["Sales de rehidratación oral sobre","Gastrointestinal",0.70,0],
+["Lactulosa 65% jarabe","Gastrointestinal",9.00,0],["Bisacodilo 5 mg tableta","Gastrointestinal",0.15,0],["Sucralfato 1 g tableta","Gastrointestinal",0.50,0],
+["Hidróxido de aluminio/magnesio suspensión","Gastrointestinal",6.80,0],
+["Prednisona 5 mg tableta","Corticoide",0.10,0],["Prednisona 50 mg tableta","Corticoide",0.40,0],["Prednisolona 5 mg tableta","Corticoide",0.30,0],
+["Dexametasona 4 mg/mL inyectable","Corticoide",0.80,0],["Hidrocortisona 100 mg inyectable","Corticoide",2.40,0],["Metilprednisolona 500 mg inyectable","Corticoide",12.00,0],
+["Betametasona crema 0.05%","Corticoide",5.50,0],
+["Loratadina 10 mg tableta","Antihistamínico",0.15,0],["Cetirizina 10 mg tableta","Antihistamínico",0.18,0],["Clorfenamina 4 mg tableta","Antihistamínico",0.06,0],
+["Difenhidramina 50 mg/mL inyectable","Antihistamínico",0.70,0],
+["Diazepam 10 mg/2mL inyectable","Neurológico",0.90,0],["Clonazepam 2 mg tableta","Neurológico",0.30,0],["Fenitoína 100 mg tableta","Neurológico",0.20,0],
+["Ácido valproico 500 mg tableta","Neurológico",0.50,0],["Carbamazepina 200 mg tableta","Neurológico",0.25,0],["Fenobarbital 100 mg tableta","Neurológico",0.20,0],
+["Levetiracetam 500 mg tableta","Neurológico",1.10,0],["Gabapentina 300 mg cápsula","Neurológico",0.45,0],["Pregabalina 75 mg cápsula","Neurológico",0.80,0],
+["Levodopa+Carbidopa 250/25 mg tableta","Neurológico",1.30,0],
+["Haloperidol 5 mg/mL inyectable","Psiquiátrico",0.90,0],["Risperidona 2 mg tableta","Psiquiátrico",0.50,0],["Olanzapina 10 mg tableta","Psiquiátrico",1.20,0],
+["Clorpromazina 100 mg tableta","Psiquiátrico",0.30,0],["Fluoxetina 20 mg cápsula","Psiquiátrico",0.20,0],["Sertralina 50 mg tableta","Psiquiátrico",0.35,0],
+["Amitriptilina 25 mg tableta","Psiquiátrico",0.15,0],
+["Levotiroxina 100 mcg tableta","Endocrino",0.18,0],["Metimazol 5 mg tableta","Endocrino",0.30,0],["Medroxiprogesterona 150 mg inyectable","Endocrino",4.50,0],
+["Etinilestradiol+Levonorgestrel tableta","Endocrino",0.40,0],
+["Ácido fólico 0.5 mg tableta","Suplemento/Vitamina",0.04,0],["Sulfato ferroso 300 mg tableta","Suplemento/Vitamina",0.05,0],["Complejo B tableta","Suplemento/Vitamina",0.08,0],
+["Ácido ascórbico (Vit. C) 500 mg tableta","Suplemento/Vitamina",0.06,0],["Colecalciferol (Vit. D) 1000 UI cápsula","Suplemento/Vitamina",0.20,0],["Retinol (Vit. A) 50 000 UI cápsula","Suplemento/Vitamina",0.25,0],
+["Carbonato de calcio 500 mg tableta","Suplemento/Vitamina",0.10,0],["Sulfato de zinc 20 mg tableta","Suplemento/Vitamina",0.12,0],["Cianocobalamina (B12) 1 mg inyectable","Suplemento/Vitamina",0.80,0],
+["Tiamina (B1) 100 mg inyectable","Suplemento/Vitamina",0.60,0],["Fitomenadiona (Vit. K) 10 mg inyectable","Suplemento/Vitamina",1.10,0],
+["Cloruro de sodio 0.9% 1L solución","Solución/Electrolito",3.80,0],["Dextrosa 5% 1L solución","Solución/Electrolito",3.90,0],["Dextrosa 10% 1L solución","Solución/Electrolito",4.30,0],
+["Lactato de Ringer 1L solución","Solución/Electrolito",4.50,0],["Cloruro de potasio 20% 10mL ampolla","Solución/Electrolito",0.90,0],["Gluconato de calcio 10% ampolla","Solución/Electrolito",1.10,0],
+["Sulfato de magnesio 20% ampolla","Solución/Electrolito",1.00,0],["Bicarbonato de sodio 8.4% ampolla","Solución/Electrolito",1.20,0],["Agua para inyección 10mL ampolla","Solución/Electrolito",0.30,0],
+["Manitol 20% 250mL solución","Solución/Electrolito",6.50,0],
+["Sulfacetamida 10% gotas oftálmicas","Oftálmico",5.50,0],["Tobramicina 0.3% gotas oftálmicas","Oftálmico",8.20,0],["Timolol 0.5% gotas oftálmicas","Oftálmico",9.50,0],
+["Mupirocina 2% ungüento","Dermatológico",7.00,0],["Sulfadiazina de plata 1% crema","Dermatológico",9.50,0],["Permetrina 5% crema","Dermatológico",6.50,0],["Óxido de zinc pasta","Dermatológico",4.20,0],
+["Lidocaína 2% inyectable","Anestésico",1.50,0],["Bupivacaína 0.5% inyectable","Anestésico",3.20,0],["Propofol 10 mg/mL inyectable","Anestésico",6.80,1],
+["Ketamina 50 mg/mL inyectable","Anestésico",7.50,0],["Fentanilo 0.05 mg/mL inyectable","Anestésico",2.80,0],["Midazolam 5 mg/mL inyectable","Anestésico",2.40,0],
+["Atracurio 10 mg/mL inyectable","Anestésico",9.00,1],["Tiopental 1 g inyectable","Anestésico",5.50,0],
+["Epinefrina (Adrenalina) 1 mg/mL ampolla","Emergencia",1.20,0],["Atropina 1 mg/mL ampolla","Emergencia",0.80,0],["Naloxona 0.4 mg/mL ampolla","Emergencia",3.50,0],
+["Dopamina 200 mg/5mL ampolla","Emergencia",2.20,0],["Dobutamina 250 mg ampolla","Emergencia",5.80,0],["Nitroglicerina 5 mg/mL ampolla","Emergencia",4.10,0],["Carbón activado 50 g polvo","Emergencia",6.00,0],
+["Metotrexato 50 mg inyectable","Antineoplásico",8.50,0],["Tamoxifeno 20 mg tableta","Antineoplásico",1.20,0],["Hidroxiurea 500 mg cápsula","Antineoplásico",0.90,0],["Mercaptopurina 50 mg tableta","Antineoplásico",2.10,0],
+["Vacuna antitetánica (dT) dosis","Vacuna",6.50,1],["Vacuna antihepatitis B dosis","Vacuna",9.00,1],["Vacuna BCG dosis","Vacuna",4.50,1],["Vacuna antirrábica dosis","Vacuna",22.00,1],["Vacuna influenza dosis","Vacuna",14.00,1]
+];
+
+const SEDES=[["LIM","ALM. Central – Lima"],["TRU","ALM. Norte – Trujillo"],["AQP","ALM. Sur – Arequipa"],["IQT","ALM. Oriente – Iquitos"],["HYO","ALM. Centro – Huancayo"]];
+
+/* deterministic PRNG */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+const rnd=mulberry32(20250531);
+const pick=arr=>arr[Math.floor(rnd()*arr.length)];
+const ri=(a,b)=>a+Math.floor(rnd()*(b-a+1));
+const TODAY=new Date();TODAY.setHours(0,0,0,0);
+function addDays(n){const d=new Date(TODAY);d.setDate(d.getDate()+n);return d;}
+function fmtDate(d){const m=["ene","feb","mar","abr","may","jun","jul","ago","set","oct","nov","dic"];return d.getDate().toString().padStart(2,"0")+" "+m[d.getMonth()]+" "+d.getFullYear();}
+function estadoFEFO(days){if(days<=30)return"crit";if(days<=180)return"prox";return"vig";}
+const FEFOLBL={crit:"Crítico",prox:"Próximo",vig:"Vigente"};
+
+/* ---- generate inventory positions ---- */
+let POS=[],seq=1;
+POOL.forEach((m,mi)=>{
+  const [name,grupo,precio,cold]=m;
+  const nSedes=1+Math.floor(rnd()*3);
+  const sedeSet=new Set(); while(sedeSet.size<nSedes){sedeSet.add(Math.floor(rnd()*SEDES.length));}
+  sedeSet.forEach(si=>{
+    const sede=SEDES[si];
+    const nLots=1+Math.floor(rnd()*3);
+    for(let l=0;l<nLots;l++){
+      // expiry distribution
+      const r=rnd();let offset;
+      if(r<0.08)offset=ri(4,30); else if(r<0.30)offset=ri(31,180); else offset=ri(181,1000);
+      const venc=addDays(offset);
+      // demand & policy
+      const demandaMes=ri(40,2600);
+      const leadM=0.75; const ss=Math.round(demandaMes*0.5); const rop=Math.round(demandaMes*leadM+ss);
+      // stock vs rop
+      const stkR=rnd();let stock;
+      if(stkR<0.06)stock=0; else if(stkR<0.22)stock=ri(Math.max(1,Math.round(rop*0.2)),rop-1); else if(stkR<0.90)stock=ri(rop,Math.round(rop*2.6)); else stock=ri(Math.round(rop*3.1),Math.round(rop*4.5));
+      const valor=stock*precio;
+      const lote="L"+sede[0]+venc.getFullYear().toString().slice(2)+(venc.getMonth()+1).toString().padStart(2,"0")+"-"+String(seq).padStart(4,"0");
+      POS.push({id:seq++,dci:name,grupo,cold,sede:sede[0],sedeName:sede[1],precio,
+        rack:ri(1,24),niv:ri(1,5),lote,venc,offset,demandaMes,ss,rop,stock,valor});
+    }
+  });
+});
+
+/* ---- ABC by value (Pareto) ---- */
+const totalVal=POS.reduce((s,p)=>s+p.valor,0);
+const byVal=[...POS].sort((a,b)=>b.valor-a.valor);
+let cum=0;byVal.forEach(p=>{cum+=p.valor;const pc=cum/totalVal;p.abc=pc<=0.80?"A":pc<=0.95?"B":"C";});
+/* ubicación: zona por ABC (frío = CF) */
+POS.forEach(p=>{const zone=p.cold?"CF":p.abc;p.ubic=zone+"-"+String(p.rack).padStart(2,"0")+"-"+p.niv;});
+/* live fields */
+function refreshDays(){POS.forEach(p=>{p.dias=Math.round((p.venc-new Date(new Date().setHours(0,0,0,0)))/86400000);p.estado=estadoFEFO(p.dias);
+  p.stkEstado = p.stock===0?"out": p.stock<p.rop?"rop": p.stock>p.rop*3?"over":"ok"; p.stkEstadoOrd={out:0,rop:1,ok:2,over:3}[p.stkEstado];});}
+refreshDays();
+
+/* ---- aggregate KPIs ---- */
+const skuCount=POOL.length;
+const critN=POS.filter(p=>p.estado==="crit").length, proxN=POS.filter(p=>p.estado==="prox").length;
+const valRiesgo=POS.filter(p=>p.estado!=="vig").reduce((s,p)=>s+p.valor,0);
+const ropN=POS.filter(p=>p.stkEstado==="rop").length, outN=POS.filter(p=>p.stkEstado==="out").length, overN=POS.filter(p=>p.stkEstado==="over").length;
+const abcN={A:POS.filter(p=>p.abc==="A").length,B:POS.filter(p=>p.abc==="B").length,C:POS.filter(p=>p.abc==="C").length};
+function soles(v){return "S/ "+Math.round(v).toLocaleString("es-PE");}
+function solesK(v){return v>=1e6?("S/ "+(v/1e6).toFixed(2)+"M"):("S/ "+Math.round(v/1000).toLocaleString("es-PE")+"k");}
+
+/* fill lede & notes */
+document.getElementById("ledePos").textContent=POS.length;
+document.getElementById("ledeSku").textContent=skuCount;
+document.getElementById("noteSku").textContent=skuCount;
+document.getElementById("invClock").textContent="Caducidad calculada a "+TODAY.toLocaleDateString("es-PE",{day:"2-digit",month:"short",year:"numeric"});
+
+/* ---- summary bar ---- */
+document.getElementById("sumbar").innerHTML=`
+  <div class="sumcell"><div class="sv">${POS.length}</div><div class="sl">Posiciones</div></div>
+  <div class="sumcell"><div class="sv">${skuCount}</div><div class="sl">SKU únicos</div></div>
+  <div class="sumcell"><div class="sv">${solesK(totalVal)}</div><div class="sl">Valor inventario</div></div>
+  <div class="sumcell"><div class="sv warn">${solesK(valRiesgo)}</div><div class="sl">Valor en riesgo</div></div>
+  <div class="sumcell"><div class="sv bad">${critN}</div><div class="sl">Lotes críticos</div></div>
+  <div class="sumcell"><div class="sv ok">${(abcN.A)}</div><div class="sl">Posiciones clase A</div></div>`;
+
+/* ---- control panel ---- */
+document.getElementById("cwPos").textContent=POS.length;
+document.getElementById("cwSku").textContent=skuCount;
+document.getElementById("cwVal").textContent=soles(totalVal);
+document.getElementById("cwRiesgo").textContent=soles(valRiesgo);
+document.getElementById("ccA").textContent=abcN.A; document.getElementById("ccB").textContent=abcN.B; document.getElementById("ccC").textContent=abcN.C;
+document.getElementById("ccDisc").textContent=Math.max(2,Math.round(POS.length*0.008)); // ~0.8% discrepancia
+document.getElementById("cwAlert").textContent=(critN+proxN);
+document.getElementById("cwCrit").textContent=critN; document.getElementById("cwProx").textContent=proxN;
+document.getElementById("cwRop").textContent=ropN; document.getElementById("cwOut").textContent=outN; document.getElementById("cwOver").textContent=overN;
+
+/* ============ TABLE + FILTERS + PAGINATION ============ */
+const body=document.getElementById("invBody");
+const fS=document.getElementById("fSearch"),fSe=document.getElementById("fSede"),fA=document.getElementById("fABC"),fE=document.getElementById("fEst"),fK=document.getElementById("fStk");
+SEDES.forEach(s=>{const o=document.createElement("option");o.value=s[0];o.textContent=s[1];fSe.appendChild(o);});
+let sortKey="dias",sortDir=1,page=1,perPage=30,view=[];
+const SSLBL={ok:"OK",rop:"Bajo ROP",over:"Sobre-stock",out:"Quiebre"};
+function applyFilters(){
+  const q=fS.value.trim().toLowerCase(),se=fSe.value,a=fA.value,e=fE.value,k=fK.value;
+  view=POS.filter(p=>(!q||p.dci.toLowerCase().includes(q)||p.grupo.toLowerCase().includes(q))&&(!se||p.sede===se)&&(!a||p.abc===a)&&(!e||p.estado===e)&&(!k||p.stkEstado===k));
+  view.sort((x,y)=>{let vx=x[sortKey],vy=y[sortKey];if(typeof vx==="string"){vx=vx.toLowerCase();vy=vy.toLowerCase();}return vx<vy?-1*sortDir:vx>vy?1*sortDir:0;});
+  page=1;renderPage();
+}
+function renderPage(){
+  const total=view.length,pages=Math.max(1,Math.ceil(total/perPage));
+  if(page>pages)page=pages;
+  const start=(page-1)*perPage,slice=view.slice(start,start+perPage);
+  body.innerHTML=slice.map(p=>{
+    const dcolor=p.estado==="crit"?"var(--red)":p.estado==="prox"?"#8a6a00":"var(--green)";
+    return `<tr>
+      <td><span class="dci">${p.dci}${p.cold?'<span class="cold">❄ 2–8°C</span>':''}</span><span class="grp">${p.grupo}</span></td>
+      <td><span class="sede">${p.sede}</span></td>
+      <td><span class="ubic">${p.ubic}</span></td>
+      <td><span class="abc ${p.abc}">${p.abc}</span></td>
+      <td class="stk">${p.stock.toLocaleString("es-PE")}</td>
+      <td class="rop">${p.rop.toLocaleString("es-PE")}</td>
+      <td class="mono" style="color:var(--ink-faint)">${p.lote}</td>
+      <td class="dleft" style="color:${dcolor}">${fmtDate(p.venc)} · <b>${p.dias}d</b></td>
+      <td><span class="est ${p.estado}"><i></i>${FEFOLBL[p.estado]}</span></td>
+      <td><span class="ss ${p.stkEstado}">${SSLBL[p.stkEstado]}</span></td>
+    </tr>`;}).join("");
+  document.getElementById("pgInfo").textContent=total?`Pág. ${page} / ${pages}`:"Sin resultados";
+  document.getElementById("pgStat").innerHTML=total?`mostrando ${start+1}–${Math.min(start+perPage,total)} de <b>${total}</b> posiciones`:"";
+  document.getElementById("pgFirst").disabled=document.getElementById("pgPrev").disabled=(page<=1);
+  document.getElementById("pgNext").disabled=document.getElementById("pgLast").disabled=(page>=pages);
+}
+[fS,fSe,fA,fE,fK].forEach(el=>el.addEventListener("input",applyFilters));
+document.querySelectorAll("#invTable thead th").forEach(th=>th.addEventListener("click",()=>{const k=th.dataset.k;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1;}applyFilters();}));
+document.getElementById("pgFirst").onclick=()=>{page=1;renderPage();};
+document.getElementById("pgPrev").onclick=()=>{page--;renderPage();};
+document.getElementById("pgNext").onclick=()=>{page++;renderPage();};
+document.getElementById("pgLast").onclick=()=>{page=Math.ceil(view.length/perPage);renderPage();};
+applyFilters();
+
+/* ============ KPIs antes/después ============ */
+const KPI=[
+  {l:"Exactitud de inventario (ERI)",b:82,a:99.2,suf:"%",good:"up"},
+  {l:"Mermas por vencimiento",b:6.4,a:0.8,suf:"%",good:"down"},
+  {l:"Rotación de inventario",b:4.1,a:8.6,suf:"×",good:"up"},
+  {l:"Quiebres de stock (clase A)",b:12,a:1.5,suf:"%",good:"down"},
+  {l:"Fill rate (nivel de servicio)",b:88,a:99.1,suf:"%",good:"up"},
+  {l:"Nivel Sigma del proceso",b:2.6,a:4.8,suf:"σ",good:"up"}
+];
+const kEl=document.getElementById("kpis");let mode="a";
+function paintKPI(){
+  kEl.innerHTML=KPI.map(k=>{const v=mode==="a"?k.a:k.b;const improved=(k.good==="up"&&k.a>k.b)||(k.good==="down"&&k.a<k.b);
+    const delta=(k.a-k.b),dtxt=(delta>0?"+":"")+delta.toFixed(1)+k.suf,cls=improved?"good":"bad";
+    return `<div class="kpi"><div class="k-l">${k.l}</div><div class="k-v" data-v="${v}" data-suf="${k.suf}">0${k.suf}</div>
+      <div class="k-d ${cls}">${mode==="a"?("Δ "+dtxt+" vs. base"):"Línea base"}</div>
+      <div class="k-base">${mode==="a"?("antes: "+k.b+k.suf):("meta: "+k.a+k.suf)}</div></div>`;}).join("");
+  animateNums(kEl);
+}
+function animateNums(scope){scope.querySelectorAll(".k-v").forEach(el=>{const t=parseFloat(el.dataset.v),suf=el.dataset.suf;let s=null;
+  function step(ts){if(!s)s=ts;const p=Math.min((ts-s)/900,1),e=1-Math.pow(1-p,3);el.textContent=(t*e).toFixed(1)+suf;if(p<1)requestAnimationFrame(step);}requestAnimationFrame(step);});}
+const tgA=document.getElementById("tgAfter"),tgB=document.getElementById("tgBefore");
+tgA.onclick=()=>{mode="a";tgA.classList.add("on");tgB.classList.remove("on");paintKPI();};
+tgB.onclick=()=>{mode="b";tgB.classList.add("on");tgA.classList.remove("on");paintKPI();};
+
+/* ============ hero ticker ============ */
+function heroCount(){document.querySelectorAll(".hero-ticker .n").forEach(el=>{const t=parseFloat(el.dataset.count),suf=el.dataset.suffix,dec=+el.dataset.dec;let s=null;
+  function step(ts){if(!s)s=ts;const p=Math.min((ts-s)/1100,1),e=1-Math.pow(1-p,3);el.textContent=(t*e).toFixed(dec)+suf;if(p<1)requestAnimationFrame(step);}requestAnimationFrame(step);});}
+
+/* ============ SVG charts ============ */
+const C={ink:'#16120D',amber:'#F2560A',amber2:'#FFB400',teal:'#0B6E6B',cyan:'#13B6A8',red:'#D7263D',green:'#1B7F4D',faint:'#8B8475'};
+
+function drawPareto(){
+  const data=[["FEFO / vencimiento",38],["Sobre-stock clase C",24],["Error de registro",18],["Quiebre→compra",12],["Mal almacenam.",8]];
+  const W=520,H=300,L=44,R=44,T=24,B=70,pw=W-L-R,ph=H-T-B,max=40;let cum=0,total=data.reduce((s,d)=>s+d[1],0),svg="";
+  const gap=pw/data.length,bw=gap*0.6;
+  svg+=`<line x1="${L}" y1="${T+ph}" x2="${W-R}" y2="${T+ph}" stroke="${C.ink}" stroke-width="1.5"/><line x1="${L}" y1="${T}" x2="${L}" y2="${T+ph}" stroke="${C.ink}" stroke-width="1.5"/>`;
+  let pts=[];
+  data.forEach((d,i)=>{const h=d[1]/max*ph,x=L+gap*i+(gap-bw)/2,y=T+ph-h;
+    svg+=`<rect x="${x}" y="${T+ph}" width="${bw}" height="0" fill="${i<3?C.amber:C.faint}"><animate attributeName="height" from="0" to="${h}" dur="0.8s" begin="${i*0.1}s" fill="freeze"/><animate attributeName="y" from="${T+ph}" to="${y}" dur="0.8s" begin="${i*0.1}s" fill="freeze"/></rect>`;
+    svg+=`<text x="${x+bw/2}" y="${y-6}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" font-weight="600" fill="${C.ink}">${d[1]}%</text>`;
+    svg+=`<text x="${x+bw/2}" y="${T+ph+15}" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="${C.faint}"><tspan>${d[0].split(' ')[0]}</tspan><tspan x="${x+bw/2}" dy="10">${d[0].split(' ').slice(1).join(' ')}</tspan></text>`;
+    cum+=d[1];pts.push([L+gap*i+gap/2,T+ph-(cum/total)*ph]);});
+  let path="M"+pts.map(p=>p[0]+","+p[1]).join(" L");
+  svg+=`<path d="${path}" fill="none" stroke="${C.teal}" stroke-width="2.5" stroke-dasharray="600" stroke-dashoffset="600"><animate attributeName="stroke-dashoffset" from="600" to="0" dur="1s" begin="0.5s" fill="freeze"/></path>`;
+  pts.forEach((p,i)=>svg+=`<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="${C.teal}" opacity="0"><animate attributeName="opacity" from="0" to="1" dur="0.3s" begin="${0.6+i*0.1}s" fill="freeze"/></circle>`);
+  const y80=T+ph-0.8*ph;svg+=`<line x1="${L}" y1="${y80}" x2="${W-R}" y2="${y80}" stroke="${C.red}" stroke-width="1" stroke-dasharray="4 4" opacity="0.7"/><text x="${W-R}" y="${y80-5}" text-anchor="end" font-family="IBM Plex Mono" font-size="9" fill="${C.red}">80% acumulado</text>`;
+  document.getElementById("paretoSvg").innerHTML=svg;
+}
+
+function drawABC(){
+  // cumulative value curve from real positions
+  const W=520,H=300,L=46,R=20,T=20,B=42,pw=W-L-R,ph=H-T-B;
+  const sorted=[...POS].sort((a,b)=>b.valor-a.valor);const n=sorted.length;let cum=0,curve=[[L,T+ph]];
+  sorted.forEach((p,i)=>{cum+=p.valor;curve.push([L+pw*((i+1)/n),T+ph-(cum/totalVal)*ph]);});
+  // zones by item count
+  const aFrac=abcN.A/n,bFrac=(abcN.A+abcN.B)/n;
+  let svg=`<rect x="${L}" y="${T}" width="${pw*aFrac}" height="${ph}" fill="${C.amber}" opacity="0.10"/>`;
+  svg+=`<rect x="${L+pw*aFrac}" y="${T}" width="${pw*(bFrac-aFrac)}" height="${ph}" fill="${C.teal}" opacity="0.10"/>`;
+  svg+=`<rect x="${L+pw*bFrac}" y="${T}" width="${pw*(1-bFrac)}" height="${ph}" fill="${C.faint}" opacity="0.10"/>`;
+  svg+=`<line x1="${L}" y1="${T+ph}" x2="${W-R}" y2="${T+ph}" stroke="${C.ink}" stroke-width="1.5"/><line x1="${L}" y1="${T}" x2="${L}" y2="${T+ph}" stroke="${C.ink}" stroke-width="1.5"/>`;
+  [0,25,50,75,100].forEach(v=>{const y=T+ph-(v/100)*ph;svg+=`<text x="${L-6}" y="${y+3}" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="${C.faint}">${v}%</text>`;});
+  let path="M"+curve.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" L");
+  const len=2000;svg+=`<path d="${path}" fill="none" stroke="${C.amber}" stroke-width="2.6" stroke-dasharray="${len}" stroke-dashoffset="${len}"><animate attributeName="stroke-dashoffset" from="${len}" to="0" dur="1.4s" fill="freeze"/></path>`;
+  // labels
+  svg+=`<text x="${L+pw*aFrac/2}" y="${T+ph-8}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" font-weight="600" fill="${C.amber}">A · ${abcN.A}</text>`;
+  svg+=`<text x="${L+pw*(aFrac+bFrac)/2}" y="${T+ph-8}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" font-weight="600" fill="${C.teal}">B · ${abcN.B}</text>`;
+  svg+=`<text x="${L+pw*(bFrac+1)/2}" y="${T+ph-8}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" font-weight="600" fill="${C.faint}">C · ${abcN.C}</text>`;
+  svg+=`<text x="${(L+W-R)/2}" y="${H-6}" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="${C.faint}">% de SKU (ordenados por valor) →  % de valor acumulado ↑</text>`;
+  document.getElementById("abcSvg").innerHTML=svg;
+}
+
+function drawControl(){
+  const W=520,H=300,L=44,R=20,T=24,B=46,pw=W-L-R,ph=H-T-B;
+  const eri=[80,79,83,81,77,82,84,88,93,96,98,99,99,99],CL=99,UCL=99.8,LCL=98.2,min=74,max=101;
+  const yy=v=>T+ph-((v-min)/(max-min))*ph,xx=i=>L+(pw/(eri.length-1))*i;let svg="";
+  svg+=`<rect x="${xx(8)}" y="${yy(UCL)}" width="${W-R-xx(8)}" height="${yy(LCL)-yy(UCL)}" fill="${C.green}" opacity="0.08"/>`;
+  [[UCL,C.red,'UCL'],[CL,C.green,'LC'],[LCL,C.red,'LCL']].forEach(([v,col,lbl])=>{svg+=`<line x1="${L}" y1="${yy(v)}" x2="${W-R}" y2="${yy(v)}" stroke="${col}" stroke-width="1" stroke-dasharray="${lbl==='LC'?'':'5 4'}" opacity="0.8"/><text x="${W-R}" y="${yy(v)-4}" text-anchor="end" font-family="IBM Plex Mono" font-size="9" fill="${col}">${lbl} ${v}%</text>`;});
+  svg+=`<line x1="${L}" y1="${T}" x2="${L}" y2="${T+ph}" stroke="${C.ink}" stroke-width="1.5"/><line x1="${L}" y1="${T+ph}" x2="${W-R}" y2="${T+ph}" stroke="${C.ink}" stroke-width="1.5"/>`;
+  [74,84,94,100].forEach(v=>svg+=`<text x="${L-6}" y="${yy(v)+3}" text-anchor="end" font-family="IBM Plex Mono" font-size="8.5" fill="${C.faint}">${v}</text>`);
+  let path="M"+eri.map((v,i)=>xx(i)+","+yy(v)).join(" L");
+  svg+=`<path d="${path}" fill="none" stroke="${C.teal}" stroke-width="2.5" stroke-dasharray="900" stroke-dashoffset="900"><animate attributeName="stroke-dashoffset" from="900" to="0" dur="1.4s" fill="freeze"/></path>`;
+  eri.forEach((v,i)=>{const col=i<7?C.amber:(v<=UCL&&v>=LCL?C.green:C.red);svg+=`<circle cx="${xx(i)}" cy="${yy(v)}" r="3.4" fill="${col}" opacity="0"><animate attributeName="opacity" from="0" to="1" dur="0.25s" begin="${i*0.09}s" fill="freeze"/></circle>`;});
+  svg+=`<text x="${xx(3)}" y="${T+ph+16}" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="${C.amber}">antes (fuera de control)</text><text x="${xx(11)}" y="${T+ph+16}" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="${C.green}">después (estable)</text>`;
+  document.getElementById("controlSvg").innerHTML=svg;
+}
+
+function drawBA(){
+  const W=520,H=300,L=40,R=20,T=20,B=56,pw=W-L-R,ph=H-T-B,d=[["ERI",82,99.2],["Fill rate",88,99.1],["Mermas",6.4,0.8],["Quiebres",12,1.5]],max=100,gap=pw/d.length,bw=gap*0.28;
+  let svg=`<line x1="${L}" y1="${T+ph}" x2="${W-R}" y2="${T+ph}" stroke="${C.ink}" stroke-width="1.5"/>`;
+  d.forEach((r,i)=>{const bx=L+gap*i+gap/2,hb=r[1]/max*ph,ha=r[2]/max*ph;
+    svg+=`<rect x="${bx-bw-3}" y="${T+ph}" width="${bw}" height="0" fill="${C.faint}"><animate attributeName="height" from="0" to="${hb}" dur="0.8s" begin="${i*0.12}s" fill="freeze"/><animate attributeName="y" from="${T+ph}" to="${T+ph-hb}" dur="0.8s" begin="${i*0.12}s" fill="freeze"/></rect>`;
+    svg+=`<rect x="${bx+3}" y="${T+ph}" width="${bw}" height="0" fill="${C.amber}"><animate attributeName="height" from="0" to="${ha}" dur="0.8s" begin="${i*0.12+0.15}s" fill="freeze"/><animate attributeName="y" from="${T+ph}" to="${T+ph-ha}" dur="0.8s" begin="${i*0.12+0.15}s" fill="freeze"/></rect>`;
+    svg+=`<text x="${bx-bw/2-3}" y="${T+ph-hb-5}" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="${C.faint}">${r[1]}</text>`;
+    svg+=`<text x="${bx+bw/2+3}" y="${T+ph-ha-5}" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" font-weight="600" fill="${C.amber}">${r[2]}</text>`;
+    svg+=`<text x="${bx}" y="${T+ph+16}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="${C.ink}">${r[0]}</text>`;});
+  svg+=`<rect x="${L}" y="${H-22}" width="11" height="11" fill="${C.faint}"/><text x="${L+16}" y="${H-13}" font-family="IBM Plex Mono" font-size="9" fill="${C.faint}">Antes</text><rect x="${L+78}" y="${H-22}" width="11" height="11" fill="${C.amber}"/><text x="${L+94}" y="${H-13}" font-family="IBM Plex Mono" font-size="9" fill="${C.amber}">Después</text>`;
+  document.getElementById("baSvg").innerHTML=svg;
+}
+
+function drawGauge(){
+  const W=520,H=300,cx=260,cy=215,r=150,a0=Math.PI,a1=0;
+  const pt=(ang,rad)=>[cx+rad*Math.cos(ang),cy-rad*Math.sin(ang)];
+  const arc=(f,t,rad)=>{const[x0,y0]=pt(f,rad),[x1,y1]=pt(t,rad),large=(f-t)>Math.PI?1:0;return`M${x0},${y0} A${rad},${rad} 0 ${large} 1 ${x1},${y1}`;};
+  const sigAng=s=>a0-((s-1)/5)*(a0-a1);let svg="";
+  [[1,2.6,C.red],[2.6,4,C.amber2],[4,6,C.green]].forEach(z=>svg+=`<path d="${arc(sigAng(z[0]),sigAng(z[1]),r)}" fill="none" stroke="${z[2]}" stroke-width="26" opacity="0.85"/>`);
+  for(let s=1;s<=6;s++){const[x,y]=pt(sigAng(s),r-22);svg+=`<text x="${x}" y="${y+4}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="${C.ink}">${s}σ</text>`;}
+  const[bx,by]=pt(sigAng(2.6),r-34);svg+=`<line x1="${cx}" y1="${cy}" x2="${bx}" y2="${by}" stroke="${C.faint}" stroke-width="3" stroke-dasharray="4 3"/>`;
+  const[nx,ny]=pt(sigAng(4.8),r-34),[sx,sy]=pt(sigAng(2.6),r-34);
+  svg+=`<line x1="${cx}" y1="${cy}" x2="${sx}" y2="${sy}" stroke="${C.amber}" stroke-width="4"><animate attributeName="x2" from="${sx}" to="${nx}" dur="1.3s" begin="0.3s" fill="freeze" calcMode="spline" keySplines="0.2 0.8 0.2 1"/><animate attributeName="y2" from="${sy}" to="${ny}" dur="1.3s" begin="0.3s" fill="freeze" calcMode="spline" keySplines="0.2 0.8 0.2 1"/></line>`;
+  svg+=`<circle cx="${cx}" cy="${cy}" r="8" fill="${C.ink}"/><text x="${cx}" y="${cy+46}" text-anchor="middle" font-family="Archivo" font-weight="900" font-size="34" fill="${C.ink}">4.8σ</text><text x="${cx}" y="${cy+66}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="${C.faint}">desde 2.6σ · DPMO ↓ ~95%</text>`;
+  document.getElementById("gaugeSvg").innerHTML=svg;
+}
+
+function drawBPA(){
+  const comp=[["Aseguramiento de la calidad",95],["Personal",92],["Instalaciones y equipos",94],["Almacenamiento",98],["Documentación",96],["Reclamos",100],["Retiro del mercado",90],["Autoinspecciones",93],["Transporte / distribución",95]];
+  const W=520,H=360,L=170,R=44,T=14,B=20,pw=W-L-R,ph=H-T-B,bh=ph/comp.length*0.62,gap=ph/comp.length;let svg="";
+  svg+=`<line x1="${L}" y1="${T}" x2="${L}" y2="${T+ph}" stroke="${C.ink}" stroke-width="1.5"/>`;
+  const x90=L+pw*0.90;svg+=`<line x1="${x90}" y1="${T}" x2="${x90}" y2="${T+ph}" stroke="${C.red}" stroke-width="1" stroke-dasharray="4 4" opacity="0.7"/><text x="${x90}" y="${T-2}" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="${C.red}">meta 90%</text>`;
+  comp.forEach((c,i)=>{const y=T+gap*i+(gap-bh)/2,w=pw*(c[1]/100);
+    svg+=`<text x="${L-8}" y="${y+bh/2+3}" text-anchor="end" font-family="IBM Plex Mono" font-size="9.5" fill="${C.ink}">${c[0]}</text>`;
+    svg+=`<rect x="${L}" y="${y}" width="0" height="${bh}" fill="${c[1]>=95?C.green:C.teal}"><animate attributeName="width" from="0" to="${w}" dur="0.9s" begin="${i*0.08}s" fill="freeze"/></rect>`;
+    svg+=`<text x="${L+w+6}" y="${y+bh/2+3}" font-family="IBM Plex Mono" font-size="9.5" font-weight="600" fill="${C.ink}">${c[1]}%</text>`;});
+  document.getElementById("bpaSvg").innerHTML=svg;
+}
+
+/* ============ reveal + lazy charts ============ */
+let drawnRes=false,drawnCtrl=false;
+function drawRes(){if(drawnRes)return;drawnRes=true;drawPareto();drawABC();drawBA();drawGauge();paintKPI();}
+function drawCtrl(){if(drawnCtrl)return;drawnCtrl=true;drawControl();drawBPA();}
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");
+  if(e.target.querySelector&&e.target.querySelector("#paretoSvg"))drawRes();
+  if(e.target.querySelector&&e.target.querySelector("#controlSvg"))drawCtrl();
+  if(e.target.querySelector&&e.target.querySelector(".hero-ticker"))heroCount();
+  e.target.querySelectorAll(".goal .bar").forEach(b=>b.style.width=b.dataset.w);}});},{threshold:0.12});
+document.querySelectorAll(".rv").forEach(el=>io.observe(el));
+setTimeout(()=>{document.querySelectorAll("header .rv").forEach(el=>el.classList.add("in"));heroCount();},120);
+</script>
+</body>
+</html>
